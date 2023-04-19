@@ -22,14 +22,15 @@ fn main() {
 	let mut cpu = Cpu::new();
 	cpu.run(&instruction_set);
 
-	for i in 0..cpu.register_history.len() {
-		println!("cycle[{}]={}", i, cpu.register_history[i]);
-	}
+	let mut crt_screen = CrtScreen::new();
+	crt_screen.populate_screen(&cpu.register_history);
 
 	println!("################################");
 	println!("#### Advent of Code, Day 10 ####");
 	println!("################################");
 	println!("Sum of signal strengths: {}", cpu.get_sum_of_signal_strengths());
+	println!("CRT Monitor:");
+	println!("{}", crt_screen.to_string());
 }
 
 fn parse_file_contents(contents: String) -> Vec<Instruction> {
@@ -103,5 +104,50 @@ impl Cpu {
 		(self.register_history[140] * 140) + 
 		(self.register_history[180] * 180) + 
 		(self.register_history[220] * 220)
+	}
+}
+
+
+const CRT_LIT: char = '#';
+const CRT_DIM: char = '.';
+const CRT_WIDTH: usize = 40;
+const CRT_HEIGHT: usize = 6;
+const CRT_TOTAL_PIXELS: usize = CRT_WIDTH * CRT_HEIGHT;
+
+struct CrtScreen {
+	display: Vec<char>,
+}
+
+impl CrtScreen {
+	fn new() -> Self {
+		CrtScreen {
+			display: vec![],
+		}
+	}
+
+	fn populate_screen(&mut self, register_history: &Vec<i32>) {
+		for cycle in 1..=CRT_WIDTH*CRT_HEIGHT {
+			self.display.push(CRT_DIM);
+		}
+	}
+
+	fn to_string(&self) -> String {
+		if self.display.len() < CRT_TOTAL_PIXELS {
+			panic!("Screen has not been fully populated yet. Only {} pixels exist, expected {}", self.display.len(), CRT_TOTAL_PIXELS);
+		}
+
+		let mut screen = String::new();
+		let mut curr_pixel = 1;
+
+		for pixel in &self.display {
+			screen.push(*pixel);
+
+			if curr_pixel % CRT_WIDTH == 0 {
+				screen.push('\n');
+			}
+			
+			curr_pixel += 1;
+		}
+		screen
 	}
 }
