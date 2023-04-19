@@ -96,11 +96,6 @@ impl Cpu {
         }
     }
 
-	fn increment_cycle_count(&mut self) {
-		self.cycle_count += 1;
-		self.register_history.push(self.register);
-	}
-
 	fn get_sum_of_signal_strengths(&self) -> i32 {
 		(self.register_history[20] * 20) + 
 		(self.register_history[60] * 60) + 
