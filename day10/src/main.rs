@@ -29,7 +29,7 @@ fn main() {
 	println!("#### Advent of Code, Day 10 ####");
 	println!("################################");
 	println!("Sum of signal strengths: {}", cpu.get_sum_of_signal_strengths());
-	println!("CRT Monitor:");
+	println!("CRT Monitor:\n");
 	println!("{}", crt_screen.to_string());
 }
 
@@ -60,7 +60,6 @@ impl Instruction {
 
 struct Cpu {
 	register: i32,
-	cycle_count: u32,
 	register_history: Vec<i32>,
 }
 
@@ -68,8 +67,7 @@ impl Cpu {
 	fn new() -> Self {
 		Cpu {
 			register: 1,
-			cycle_count: 0,
-			register_history: vec![1],
+			register_history: vec![],
 		}
 	}
 
@@ -82,15 +80,11 @@ impl Cpu {
     fn execute_instruction(&mut self, instruction: &Instruction) {
         match instruction {
             Instruction::Noop => {
-				self.cycle_count += 1;
 				self.register_history.push(self.register);		
             }
             Instruction::Addx(value) => {
 				// addx instructions take 2 cycles
-				self.cycle_count += 1;
 				self.register_history.push(self.register);
-
-				self.cycle_count += 1;
 				self.register_history.push(self.register);
 				self.register += value;
             }
@@ -98,12 +92,12 @@ impl Cpu {
     }
 
 	fn get_sum_of_signal_strengths(&self) -> i32 {
-		(self.register_history[20] * 20) + 
-		(self.register_history[60] * 60) + 
-		(self.register_history[100] * 100) + 
-		(self.register_history[140] * 140) + 
-		(self.register_history[180] * 180) + 
-		(self.register_history[220] * 220)
+		(self.register_history[19] * 20) + 
+		(self.register_history[59] * 60) + 
+		(self.register_history[99] * 100) + 
+		(self.register_history[139] * 140) + 
+		(self.register_history[179] * 180) + 
+		(self.register_history[219] * 220)
 	}
 }
 
@@ -126,8 +120,15 @@ impl CrtScreen {
 	}
 
 	fn populate_screen(&mut self, register_history: &Vec<i32>) {
-		for cycle in 1..=CRT_WIDTH*CRT_HEIGHT {
-			self.display.push(CRT_DIM);
+		for cycle in 0..CRT_TOTAL_PIXELS {
+			let pos_in_row = (cycle % CRT_WIDTH) as i32;
+
+			if ((register_history[cycle] - 1)..=(register_history[cycle] + 1)).contains(&pos_in_row){
+				self.display.push(CRT_LIT);
+			}
+			else {
+				self.display.push(CRT_DIM);
+			}
 		}
 	}
 
