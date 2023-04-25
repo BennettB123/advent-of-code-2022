@@ -1,8 +1,16 @@
-use std::collections::{VecDeque};
+// Advent of Code 2022
+// Day 11
+
+// Notes: gotta be honest on this one... I didn't take the time to understand the modulo math involved in part 2.
+//  I also didn't want to parse the input file, so I've hard coded all of the monkey's starting items and calculations
+
+use std::collections::VecDeque;
+
+const NUM_ROUNDS: u32 = 10000;
 
 #[derive(Debug)]
 struct Monkey {
-    items: VecDeque<i64>,
+    items: VecDeque<i128>,
     items_inspected: u32,
 }
 
@@ -18,11 +26,11 @@ impl Monkey {
         self.items.len() > 0
     }
 
-    fn give(&mut self, item: i64) {
+    fn give(&mut self, item: i128) {
         self.items.push_back(item);
     }
 
-    fn remove(&mut self) -> i64 {
+    fn remove(&mut self) -> i128 {
         self.items_inspected += 1;
         self.items.pop_front().unwrap()
     }
@@ -82,13 +90,16 @@ fn main() {
     monkey_7.give(69);
     monkey_7.give(65);
 
+    let product_of_all_mods: i128 = 7 * 11 * 13 * 3 * 17 * 2 * 5 * 19;
+
     // Do 20 rounds
-    for _ in 0..20 {
+    for _ in 0..NUM_ROUNDS {
         // handle Monkey 0
         while monkey_0.has_items() {
             let mut item = monkey_0.remove();
             item *= 11;
-            item /= 3;
+            //item /= 3;
+            item %= product_of_all_mods;
             if item % 7 == 0 {
                 monkey_6.give(item);
             }
@@ -101,7 +112,8 @@ fn main() {
         while monkey_1.has_items() {
             let mut item = monkey_1.remove();
             item += 1;
-            item /= 3;
+            //item /= 3;
+            item %= product_of_all_mods;
             if item % 11 == 0 {
                 monkey_5.give(item);
             }
@@ -114,7 +126,8 @@ fn main() {
         while monkey_2.has_items() {
             let mut item = monkey_2.remove();
             item *= 7;
-            item /= 3;
+            //item /= 3;
+            item %= product_of_all_mods;
             if item % 13 == 0 {
                 monkey_4.give(item);
             }
@@ -127,7 +140,8 @@ fn main() {
         while monkey_3.has_items() {
             let mut item = monkey_3.remove();
             item += 3;
-            item /= 3;
+            //item /= 3;
+            item %= product_of_all_mods;
             if item % 3 == 0 {
                 monkey_1.give(item);
             }
@@ -140,7 +154,8 @@ fn main() {
         while monkey_4.has_items() {
             let mut item = monkey_4.remove();
             item += 6;
-            item /= 3;
+            //item /= 3;
+            item %= product_of_all_mods;
             if item % 17 == 0 {
                 monkey_3.give(item);
             }
@@ -153,7 +168,8 @@ fn main() {
         while monkey_5.has_items() {
             let mut item = monkey_5.remove();
             item += 5;
-            item /= 3;
+            //item /= 3;
+            item %= product_of_all_mods;
             if item % 2 == 0 {
                 monkey_0.give(item);
             }
@@ -165,8 +181,10 @@ fn main() {
         // handle Monkey 6
         while monkey_6.has_items() {
             let mut item = monkey_6.remove();
+            println!("item: {}", item);
             item *= item;
-            item /= 3;
+            //item /= 3;
+            item %= product_of_all_mods;
             if item % 5 == 0 {
                 monkey_2.give(item);
             }
@@ -179,7 +197,8 @@ fn main() {
         while monkey_7.has_items() {
             let mut item = monkey_7.remove();
             item += 7;
-            item /= 3;
+            //item /= 3;
+            item %= product_of_all_mods;
             if item % 19 == 0 {
                 monkey_5.give(item);
             }
@@ -189,24 +208,21 @@ fn main() {
         }
     }
 
-    // Part 1 calculations
-    let mut inspection_counts: Vec<u32> = vec![monkey_0.items_inspected,
-                                               monkey_1.items_inspected,
-                                               monkey_2.items_inspected,
-                                               monkey_3.items_inspected,
-                                               monkey_4.items_inspected,
-                                               monkey_5.items_inspected,
-                                               monkey_6.items_inspected,
-                                               monkey_7.items_inspected];
+    // Calculations
+    let mut inspection_counts: Vec<u128> = vec![monkey_0.items_inspected as u128,
+                                                monkey_1.items_inspected as u128,
+                                                monkey_2.items_inspected as u128,
+                                                monkey_3.items_inspected as u128,
+                                                monkey_4.items_inspected as u128,
+                                                monkey_5.items_inspected as u128,
+                                                monkey_6.items_inspected as u128,
+                                                monkey_7.items_inspected as u128];
     inspection_counts.sort();
-    let part_one_monkey_business: u32 = inspection_counts.iter().rev().take(2).product();
-
-    // Part 2 calculations
-    
+    let monkey_business: u128 = inspection_counts.iter().rev().take(2).product();
 
     // Print answers
     println!("################################");
 	println!("#### Advent of Code, Day 11 ####");
 	println!("################################");
-    println!("The two monkeys with the most inspected items had a monkey business of {}", part_one_monkey_business);
+    println!("After {} rounds, the two monkeys with the most inspected items had a monkey business of {}", NUM_ROUNDS, monkey_business);
 }
