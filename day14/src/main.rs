@@ -1,7 +1,10 @@
 // Advent of Code 2022
 // Day 14
 
-use std::{env, fs};
+use std::{
+    cmp::{max, min},
+    env, fs,
+};
 
 fn main() {
     // get file path from commandline input
@@ -18,12 +21,23 @@ fn main() {
 
     let mut cave = parse_file_to_cave(&file_contents);
 
+    // part 1
+    let mut part_1_num_sand = 0;
+    while cave.add_sand() {
+        part_1_num_sand += 1
+    }
+
     // print answers
     println!("################################");
     println!("#### Advent of Code, Day 14 ####");
     println!("################################");
+    println!(
+        "Part 1: {} pieces of sand were able to fall and come to rest",
+        part_1_num_sand
+    );
 }
 
+#[derive(Clone, Copy)]
 enum Material {
     Air,
     Rock,
@@ -47,6 +61,9 @@ struct Cave {
 }
 
 impl Cave {
+    const SAND_START_X: usize = 500;
+    const SAND_START_Y: usize = 0;
+
     fn new(width: usize, height: usize) -> Self {
         let mut cave: Vec<Vec<Material>> = vec![];
         for _ in 0..height {
@@ -63,24 +80,106 @@ impl Cave {
         }
     }
 
-    fn add_line_of_rocks(&mut self, start: (usize, usize), end: (usize, usize)) {
-        // 487,45 -> 487,38
-        // 487,45 -> 489,45
-        let start_x: i32 = start.0 as i32;
-        let start_y: i32 = start.1 as i32;
-        let end_x: i32 = end.0 as i32;
-        let end_y: i32 = end.1 as i32;
-
-        let x_diff = (start_x - end_x).abs();
-        let y_diff = (start_y - end_y).abs();
+    fn add_material(&mut self, x: usize, y: usize, mat: Material) {
+        self.cave[y][x] = mat;
     }
 
+    fn material_at_x_y(&self, x: usize, y: usize) -> Option<&Material> {
+        if x > self.width - 1 || y > self.height - 1 {
+            return Option::None;
+        }
+        Option::Some(&self.cave[y][x])
+    }
+
+    fn add_line_of_rocks(&mut self, start: (usize, usize), end: (usize, usize)) {
+        let start_x: usize = start.0;
+        let start_y: usize = start.1;
+        let end_x: usize = end.0;
+        let end_y: usize = end.1;
+
+        let x_diff = (start_x as i32 - end_x as i32).abs();
+
+        if x_diff != 0 {
+            // adding a horizontal line
+            for x in min(start_x, end_x)..=max(start_x, end_x) {
+                self.add_material(x, start_y, Material::Rock);
+            }
+        } else {
+            // adding a vertical line
+            for y in min(start_y, end_y)..=max(start_y, end_y) {
+                self.add_material(start_x, y, Material::Rock);
+            }
+        }
+    }
+
+    // adds a piece of sand at (SAND_START_X, SAND_START_Y) and simulates it falling.
+    // returns true if the sand came to rest, or false if the sand falls into the endless void
+    // Increments Cave::num_sand if the sand came to rest
+    // TODO: please, please, please refactor this...
+    fn add_sand(&mut self) -> bool {
+        let mut sand_x = Cave::SAND_START_X;
+        let mut sand_y = Cave::SAND_START_Y;
+
+        while sand_y < self.height {
+            match self.material_at_x_y(sand_x, sand_y + 1) {
+                None => break,
+                Some(mat) => {
+                    match mat {
+                        // if space below is air, move down one
+                        Material::Air => {
+                            sand_y += 1;
+                        }
+                        _ => match self.material_at_x_y(sand_x - 1, sand_y + 1) {
+                            None => break,
+                            Some(mat) => {
+                                match mat {
+                                    // if space down+left is air, move there
+                                    Material::Air => {
+                                        sand_x -= 1;
+                                        sand_y += 1;
+                                    }
+                                    _ => match self.material_at_x_y(sand_x + 1, sand_y + 1) {
+                                        None => break,
+                                        Some(mat) => {
+                                            match mat {
+                                                // if space down+right is air, move there
+                                                Material::Air => {
+                                                    sand_x += 1;
+                                                    sand_y += 1;
+                                                }
+                                                _ => {
+                                                    // if we get here, the sand couldn't move down, left, or right. it has come to rest
+                                                    self.add_material(
+                                                        sand_x,
+                                                        sand_y,
+                                                        Material::Sand,
+                                                    );
+                                                    return true;
+                                                }
+                                            }
+                                        }
+                                    },
+                                }
+                            }
+                        },
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    #[allow(dead_code)]
     fn print(&self) {
         let mut s = String::new();
 
         for y in 0..self.height {
             for x in 0..self.width {
-                s += &format!("{}", self.cave[y][x]);
+                if x == Cave::SAND_START_X && y == Cave::SAND_START_Y {
+                    s.push('X');
+                } else {
+                    s += &format!("{}", self.cave[y][x]);
+                }
             }
             s += "\n";
         }
@@ -91,8 +190,7 @@ impl Cave {
 
 fn parse_file_to_cave(contents: &String) -> Cave {
     let (highest_x, highest_y) = find_lows_and_highs(contents);
-    println!("highest x = {}, highest y = {}", highest_x, highest_y);
-    let mut cave = Cave::new(highest_x, highest_y);
+    let mut cave = Cave::new(highest_x + 5, highest_y + 5); // adding some padding so sand doesn't fall outside of the vector's bounds
 
     // parse input string
     for line in contents.lines() {
