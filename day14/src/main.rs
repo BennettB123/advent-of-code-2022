@@ -19,12 +19,20 @@ fn main() {
         Err(err) => panic!("Could not open input file {}. Reason: {}", input_file, err),
     };
 
-    let mut cave = parse_file_to_cave(&file_contents);
-
     // part 1
+    let mut cave_part_1 = parse_file_to_cave(&file_contents);
     let mut part_1_num_sand = 0;
-    while cave.add_sand() {
-        part_1_num_sand += 1
+    while cave_part_1.add_sand() {
+        part_1_num_sand += 1;
+    }
+
+    // part 2
+    let mut cave_part_2 = parse_file_to_cave(&file_contents);
+    let highest_y = cave_part_2.find_highest_rock_y();
+    cave_part_2.add_line_of_rocks((0, highest_y + 2), (cave_part_2.width - 1, highest_y + 2));
+    let mut part_2_num_sand = 0;
+    while cave_part_2.add_sand() {
+        part_2_num_sand += 1;
     }
 
     // print answers
@@ -34,6 +42,10 @@ fn main() {
     println!(
         "Part 1: {} pieces of sand were able to fall and come to rest",
         part_1_num_sand
+    );
+    println!(
+        "Part 2: {} pieces of sand were able to fall and come to rest",
+        part_2_num_sand
     );
 }
 
@@ -115,10 +127,16 @@ impl Cave {
     // adds a piece of sand at (SAND_START_X, SAND_START_Y) and simulates it falling.
     // returns true if the sand came to rest, or false if the sand falls into the endless void
     // Increments Cave::num_sand if the sand came to rest
-    // TODO: please, please, please refactor this...
+    // TODO: please refactor this...
     fn add_sand(&mut self) -> bool {
         let mut sand_x = Cave::SAND_START_X;
         let mut sand_y = Cave::SAND_START_Y;
+
+        // early return if sand already exists are starting location
+        match self.material_at_x_y(sand_x, sand_y).unwrap() {
+            Material::Sand | Material::Rock => return false,
+            _ => (),
+        }
 
         while sand_y < self.height {
             match self.material_at_x_y(sand_x, sand_y + 1) {
@@ -169,6 +187,21 @@ impl Cave {
         false
     }
 
+    fn find_highest_rock_y(&self) -> usize {
+        let mut highest = 0;
+
+        for y in 0..self.height {
+            for x in 0..self.width {
+                match self.material_at_x_y(x, y).unwrap() {
+                    Material::Rock => highest = y,
+                    _ => (),
+                }
+            }
+        }
+
+        highest
+    }
+
     #[allow(dead_code)]
     fn print(&self) {
         let mut s = String::new();
@@ -190,7 +223,7 @@ impl Cave {
 
 fn parse_file_to_cave(contents: &String) -> Cave {
     let (highest_x, highest_y) = find_lows_and_highs(contents);
-    let mut cave = Cave::new(highest_x + 5, highest_y + 5); // adding some padding so sand doesn't fall outside of the vector's bounds
+    let mut cave = Cave::new(highest_x + 750, highest_y + 5); // adding a lot of padding so sand doesn't fall outside of the vector's bounds
 
     // parse input string
     for line in contents.lines() {
