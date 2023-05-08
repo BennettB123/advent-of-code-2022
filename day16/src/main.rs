@@ -35,6 +35,7 @@ fn main() {
 fn parse_input(contents: &String) -> Vec<Valve> {
     let mut valves: Vec<Valve> = vec![];
 
+    // capture 1(Valve name), 2(Flow rate), 3(comma-separated list of tunnels)
     let re = Regex::new(r"Valve ([A-Z]+) has flow rate=(\d+); tunnels? leads? to valves? (.*)$")
         .unwrap();
 
@@ -52,7 +53,6 @@ fn parse_input(contents: &String) -> Vec<Valve> {
 
         // create vector of tunnels for this valve
         let mut tunnels = vec![];
-
         for t in captures[3].split(',') {
             tunnels.push(t.trim());
         }
@@ -68,13 +68,13 @@ fn parse_input(contents: &String) -> Vec<Valve> {
     valves
 }
 
-fn get_valve_by_name<'a>(valves: &'a Vec<Valve>, name: &str) -> Option<&'a Valve<'a>> {
+fn get_valve_by_name<'a>(valves: &'a Vec<Valve>, name: &str) -> &'a Valve<'a> {
     for v in valves {
         if v.name == name {
-            return Option::Some(v);
+            return v
         }
     }
-    Option::None
+    panic!("Did not find valve with name '{}'!", name);
 }
 
 #[derive(Debug)]
